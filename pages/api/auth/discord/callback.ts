@@ -52,8 +52,8 @@ export default async function handler(
 
   await prisma.oAuthState.delete({ where: { state } })
 
-  let clientId = 1518661158016647418
-  let clientSecret = rJrqQP3rli4I5V8f1I6oj7XNkYoZLtHW
+  let clientId = process.env.DISCORD_APPLICATION_ID
+  let clientSecret = process.env.DISCORD_SECRET
 
   if (!clientId || !clientSecret) {
     const configs = await prisma.instanceConfig.findMany({
