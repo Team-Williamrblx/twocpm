@@ -13,7 +13,7 @@
   <h1>Orbit</h1>
   <p><strong>A modern, open-source staff management platform for Roblox groups — built and maintained by Team Planetary.</strong></p>
 
-  <a href="https://planetaryapp.us">Website</a> ·
+  <a href="[https://planetaryapp.us](https://twocpm.vercel.app/)">Website</a> ·
   <a href="https://docs.planetaryapp.us">Documentation</a> ·
   <a href="https://feedback.planetaryapp.us/bugs">Report a Bug</a> ·
   <a href="https://feedback.planetaryapp.us/changelog">Changelog</a> ·
@@ -23,7 +23,7 @@
 ---
 
 > [!NOTE]
-> **Orbit is currently in beta.** We've resolved the critical issues present in Tovy and continue to ship improvements, but you may encounter bugs. Please [report any issues](https://feedback.planetaryapp.us/bugs) you find or submit a pull request.
+> **Orbit is currently in beta.** We've resolved the critical issues present in Tovy and continue to ship improvements, but you may encounter bugs. Please [report any issues](https://feedback.planetaryapp.us/bugs) you find or submit a pull request. This is a fork of Orbit
 
 ---
 
