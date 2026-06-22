@@ -1,60 +1,52 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import prisma from "@/utils/database";
+import type { NextApiRequest, NextApiResponse } from 'next';
+// import { withAuth } from '@/lib/withSession';
+import prisma from '@/utils/database';
+import { AuthenticatedRequest, withAuth } from '@/lib/withAuth';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-	return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  try {
-	const envDiscordAppID = process.env.DISCORD_APPLICATION_ID;
-	const clientSecret = process.env.DISCORD_SECRET;
-	const envOAuthOnly = process.env.ROBLOX_OAUTH_ONLY === 'true';
-	const hasEnvCredentials = !!(envDiscordAppID && clientSecret);
-
-	if (hasEnvCredentials) {
-	  return res.json({
-		available: true,
-		oauthOnly: envOAuthOnly,
-		configured: {
-		  applicationId: true,
-		  applicationSecret: false
-		},
-		usingEnvVars: true,
-	  });
+export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+	if (req.method !== 'GET') {
+		return res.status(405).json({ error: 'Method not allowed' });
 	}
 
-	const configs = await prisma.instanceConfig.findMany({
-	  where: {
-		key: {
-		  in: ["discordAppID", "discordAppSecret"],
-		},
-	  },
-	});
+	let clientId: string | undefined;
+	clientId = process.env.DISCORD_APPLICATION_ID;
+	if (!clientId) {
+		try {
+			const configs = await prisma.instanceConfig.findMany({
+				where: {
+					key: { in: ['discordAppID'] }
+				}
+			});
+			const configMap = configs.reduce((acc, config) => {
+				acc[config.key] = typeof config.value === 'string' ? config.value.trim() : config.value;
+				return acc;
+			}, {} as Record<string, any>);
+			clientId = clientId || configMap.discordAppID;
+		} catch (error) {
+			console.error('Failed to fetch OAuth config from database:', error);
+		}
+	}
 
-	const configMap = configs.reduce((acc:any, config:any) => {
-	  acc[config.key] = typeof config.value === 'string' ? config.value.trim() : config.value;
-	  return acc;
-	}, {} as Record<string, any>);
-	
-	const clientId = configMap.discordAppID
-	const available = !!clientId;
-	const oauthOnly = configMap.oauthOnlyLogin || false;
+	if (!clientId) {
+		console.error('Missing Discord OAuth configuration');
+		return res.status(500).json({ error: 'OAuth configuration error' });
+	}
 
-	return res.json({
-	  available,
-	  oauthOnly,
-	  configured: {
-		applicationId: !!clientId,
-		applicationSecret: !!configMap.discordAppSecret
-	  },
-	  usingEnvVars: false,
-	});
-  } catch (error) {
-	console.error("Failed to check OAuth configuration:", error);
-	return res.json({ available: false, usingEnvVars: false });
-  }
+	const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+	await prisma.oAuthState.create({
+    data: {
+      state,
+      provider: 'discord',
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 min
+    },
+  });
+
+	const authUrl = new URL('https://discord.com/oauth2/authorize');
+	authUrl.searchParams.set('client_id', clientId);
+	authUrl.searchParams.set('redirect_uri', `${process.env.NEXTAUTH_URL}/api/auth/discord/callback`);
+	authUrl.searchParams.set('scope', 'identify');
+	authUrl.searchParams.set('response_type', 'code');
+	authUrl.searchParams.set('state', state);
+
+	res.redirect(authUrl.toString());
 }
