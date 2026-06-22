@@ -10,8 +10,8 @@ export default async function handler(
   }
 
   try {
-	const envDiscordAppID = 1518661158016647418;
-	const clientSecret = rJrqQP3rli4I5V8f1I6oj7XNkYoZLtHW;
+	const envDiscordAppID = process.env.DISCORD_APPLICATION_ID;
+	const clientSecret = process.env.DISCORD_SECRET;
 	const envOAuthOnly = process.env.ROBLOX_OAUTH_ONLY === 'true';
 	const hasEnvCredentials = !!(envDiscordAppID && clientSecret);
 
